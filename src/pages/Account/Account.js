@@ -1,8 +1,8 @@
 import { memo, useEffect, useRef, useState } from "react";
+import axios from "axios";
 import Cookies from "js-cookie";
 import { LogoOverlay } from "../../components";
 import {
-  googleLogo,
   AUTH,
   HIDE_APPS,
   URL_ROOT_API,
@@ -10,18 +10,65 @@ import {
   removeRefClassName,
 } from "../../utils";
 
-const ContextMemo = memo(({ mainViewRef, storageAuth }) => {
+const GOOGLE_SCRIPT_ID = "google-platform";
+
+const ContextMemo = memo(({ mainViewRef, isReady, storageAuth }) => {
   const isEmail = !!storageAuth?.email;
+
+  useEffect(() => {
+    if (isReady === false) return;
+    if (isEmail) return;
+    if (!document.getElementById(GOOGLE_SCRIPT_ID)) {
+      const script = document.createElement("script");
+      script.id = GOOGLE_SCRIPT_ID;
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }, [isReady, isEmail]);
+
+  window.handleCredentialResponse = (googleCredential) => {
+    let headers = {};
+    if (storageAuth?.token)
+      headers = {
+        ...headers,
+        Authorization: "Bearer " + storageAuth.token,
+      };
+
+    axios
+      .post(
+        `${URL_ROOT_API}/user/register`,
+        {
+          googleCredential: googleCredential.credential,
+        },
+        {
+          headers,
+        }
+      )
+      .then((res) => {
+      });
+  };
 
   const SignInWithGoogle = () => (
     <div className="flex justify-center px-4 py-2">
-      <a
-        className="flex justify-center items-center py-2 px-4 border border-gray-300 bg-white rounded"
-        href={`${URL_ROOT_API}/auth/google`}
-      >
-        <div className="google-button-logo">{googleLogo}</div>
-        <span className="ml-2 text-stone-500">Sign in with Google</span>
-      </a>
+      <div
+        id="g_id_onload"
+        data-client_id="83080450952-rllpgdh47oov5kjdgm817j0n1n7qsh18.apps.googleusercontent.com"
+        data-context="signup"
+        data-ux_mode="popup"
+        data-callback="handleCredentialResponse"
+        data-auto_prompt="false"
+      ></div>
+      <div
+        className="g_id_signin"
+        data-type="standard"
+        data-shape="pill"
+        data-theme="outline"
+        data-text="signin_with"
+        data-size="large"
+        data-logo_alignment="left"
+      ></div>
     </div>
   );
 
@@ -61,14 +108,15 @@ const Account = () => {
     local: false,
     api: false,
   });
+  const isReady = Object.values(widgetReady).every((value) => value === true);
 
   useEffect(() => {
     (async () => {
-      if (Object.values(widgetReady).every((value) => value === true)) {
+      if (isReady) {
         removeRefClassName(mainViewRef, HIDE_APPS);
       }
     })();
-  }, [widgetReady]);
+  }, [isReady]);
 
   useEffect(() => {
     (async () => {
@@ -100,7 +148,7 @@ const Account = () => {
     })();
   }, [storageAuth]);
 
-  return <ContextMemo {...{ mainViewRef, storageAuth }} />;
+  return <ContextMemo {...{ mainViewRef, isReady, storageAuth }} />;
 };
 
 export default Account;
