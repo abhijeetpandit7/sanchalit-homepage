@@ -1,19 +1,24 @@
 import { memo, useEffect, useRef, useState } from "react";
-import axios from "axios";
-import Cookies from "js-cookie";
 import { LogoOverlay } from "../../components";
 import {
-  AUTH,
   HIDE_APPS,
-  URL_ROOT_API,
-  isObjectEmpty,
+  TOKEN,
+  checkIfExtensionIsInstalled,
+  connectGoogle,
+  getLocalCookieItem,
+  getUser,
+  getUserId,
+  logInUserWithGoogle,
+  mergeUserWithGoogle,
   removeRefClassName,
+  setLocalCookieItem,
+  signUpUserWithGoogle,
 } from "../../utils";
 
 const GOOGLE_SCRIPT_ID = "google-platform";
 
-const ContextMemo = memo(({ mainViewRef, isReady, storageAuth }) => {
-  const isEmail = !!storageAuth?.email;
+const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
+  const isEmail = !!auth?.email;
 
   useEffect(() => {
     if (isReady === false) return;
@@ -28,26 +33,46 @@ const ContextMemo = memo(({ mainViewRef, isReady, storageAuth }) => {
     }
   }, [isReady, isEmail]);
 
-  window.handleCredentialResponse = (googleCredential) => {
-    let headers = {};
-    if (storageAuth?.token)
-      headers = {
-        ...headers,
-        Authorization: "Bearer " + storageAuth.token,
-      };
+  window.handleCredentialResponse = async (googleCredential) => {
+    let response, authenticationType;
+    let isExistingGoogleUser = false;
+    const googleCredentialAssociatedAuthResponse = await getUserId(
+      googleCredential
+    );
+    if (googleCredentialAssociatedAuthResponse?.success) {
+      isExistingGoogleUser = true;
+    }
 
-    axios
-      .post(
-        `${URL_ROOT_API}/user/register`,
-        {
-          googleCredential: googleCredential.credential,
-        },
-        {
-          headers,
-        }
-      )
-      .then((res) => {
-      });
+    if (isExistingGoogleUser && token) {
+      const isSeparateUserId =
+        googleCredentialAssociatedAuthResponse.auth.userId !== auth.userId;
+      if (isSeparateUserId) {
+        response = await mergeUserWithGoogle(googleCredential, token);
+        authenticationType = "mergeUserWithGoogle";
+      }
+    } else if (isExistingGoogleUser && !token) {
+      response = await logInUserWithGoogle(googleCredential);
+      authenticationType = "logInUserWithGoogle";
+    } else if (!isExistingGoogleUser && token) {
+      response = await connectGoogle(googleCredential, token);
+      authenticationType = "connectGoogle";
+    } else {
+      response = await signUpUserWithGoogle(googleCredential);
+      authenticationType = "signUpUserWithGoogle";
+    }
+
+    if (response?.success) {
+      await setToken(response.auth.token);
+      if (checkIfExtensionIsInstalled()) {
+        window.postMessage(
+          {
+            type: authenticationType,
+            payload: { auth: response.auth },
+          },
+          window.location
+        );
+      }
+    }
   };
 
   const SignInWithGoogle = () => (
@@ -74,9 +99,11 @@ const ContextMemo = memo(({ mainViewRef, isReady, storageAuth }) => {
 
   const Profile = () => (
     <div className="p-4 sm:p-8 flex flex-col items-center">
-      <h1 className="mb-4 sm:mb-8 text-2xl font-bold text-center">John Doe</h1>
+      <h1 className="mb-4 sm:mb-8 text-2xl font-bold text-center">
+        {auth?.fullName}
+      </h1>
       <img
-        // src="/profile.png"
+        src={auth?.profilePictureUrl}
         alt="Profile"
         className="w-24 h-24 mb-4 sm:mb-8 object-cover rounded-full "
       />
@@ -102,7 +129,7 @@ const ContextMemo = memo(({ mainViewRef, isReady, storageAuth }) => {
 
 const Account = () => {
   const mainViewRef = useRef(null);
-  const [storageAuth, setStorageAuth] = useState(null);
+  const [auth, setAuth] = useState(null);
   const [token, setToken] = useState(null);
   const [widgetReady, setWidgetReady] = useState({
     local: false,
@@ -122,6 +149,10 @@ const Account = () => {
     (async () => {
       if (widgetReady.local) {
         if (token) {
+          const authResponse = await getUser(token);
+          if (authResponse?.success) {
+            await setAuth(authResponse.auth);
+          }
         }
         setWidgetReady((prevState) => ({ ...prevState, api: true }));
       }
@@ -130,25 +161,24 @@ const Account = () => {
 
   useEffect(() => {
     (async () => {
-      let auth;
+      let token;
       try {
-        auth = await JSON.parse(Cookies.get(AUTH));
+        token = await getLocalCookieItem(TOKEN);
       } catch (e) {}
-      setStorageAuth(auth ?? {});
-      setToken(auth?.token);
+      setToken(token);
       setWidgetReady((prevState) => ({ ...prevState, local: true }));
     })();
   }, []);
 
   useEffect(() => {
     (async () => {
-      if (isObjectEmpty(storageAuth) === false) {
-        await Cookies.set(AUTH, JSON.stringify(storageAuth), { expires: 365 });
+      if (token) {
+        await setLocalCookieItem(TOKEN, token);
       }
     })();
-  }, [storageAuth]);
+  }, [token]);
 
-  return <ContextMemo {...{ mainViewRef, isReady, storageAuth }} />;
+  return <ContextMemo {...{ mainViewRef, auth, isReady, token, setToken }} />;
 };
 
 export default Account;

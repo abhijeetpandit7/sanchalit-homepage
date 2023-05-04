@@ -1,4 +1,5 @@
-export const AUTH = "auth";
 export const HIDE_APPS = "hide-apps";
+export const TOKEN = "token";
 
-export const URL_ROOT_API = "http://localhost:5000";
+export const URL_ROOT_API = "https://api.sanchalit.live";
+export const URL_ROOT_DOMAIN = "https://sanchalit.live";
