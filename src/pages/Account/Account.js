@@ -75,6 +75,13 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
     }
   };
 
+  const logOutUser = () => {
+    setToken("");
+    if (checkIfExtensionIsInstalled()) {
+      window.postMessage({ type: "logOutUser" }, window.location);
+    }
+  };
+
   const SignInWithGoogle = () => (
     <div className="flex justify-center px-4 py-2">
       <div
@@ -107,7 +114,10 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
         alt="Profile"
         className="w-24 h-24 mb-4 sm:mb-8 object-cover rounded-full "
       />
-      <button className="py-2 px-4 font-bold text-white rounded-lg bg-blue-500 hover:bg-blue-600">
+      <button
+        className="py-2 px-4 font-bold text-white rounded-lg bg-blue-500 hover:bg-blue-600"
+        onClick={logOutUser}
+      >
         Log out
       </button>
     </div>
@@ -153,7 +163,7 @@ const Account = () => {
           if (authResponse?.success) {
             await setAuth(authResponse.auth);
           }
-        }
+        } else setAuth(null);
         setWidgetReady((prevState) => ({ ...prevState, api: true }));
       }
     })();
@@ -172,7 +182,7 @@ const Account = () => {
 
   useEffect(() => {
     (async () => {
-      if (token) {
+      if (token || token?.length === 0) {
         await setLocalCookieItem(TOKEN, token);
       }
     })();
