@@ -83,43 +83,53 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
   };
 
   const SignInWithGoogle = () => (
-      <div
-        id="g_id_onload"
-        data-client_id="83080450952-rllpgdh47oov5kjdgm817j0n1n7qsh18.apps.googleusercontent.com"
-        data-context="signup"
-        data-ux_mode="popup"
-        data-callback="handleCredentialResponse"
-        data-auto_prompt="false"
-      <div
-        className="g_id_signin"
-        data-type="standard"
-        data-theme="outline"
-        data-text="signin_with"
+    <div className="h-full flex flex-col justify-center background">
+      <div className="flex justify-center px-4 py-2">
+        <div
+          id="g_id_onload"
+          data-client_id="83080450952-rllpgdh47oov5kjdgm817j0n1n7qsh18.apps.googleusercontent.com"
+          data-context="signup"
+          data-ux_mode="popup"
+          data-callback="handleCredentialResponse"
+          data-auto_prompt="false"
+        ></div>
+        <div
+          className="g_id_signin"
+          data-type="standard"
+          data-shape="pill"
+          data-theme="outline"
+          data-text="signin_with"
+          data-size="large"
+          data-logo_alignment="left"
+        ></div>
       </div>
     </div>
   );
 
   const Profile = () => (
-    <div className="p-4 sm:p-8 flex flex-col items-center">
-        className="w-24 h-24 mb-4 sm:mb-8 object-cover rounded-full "
-      />
-      <button
-        className="py-2 px-4 font-bold text-white rounded-lg bg-blue-500 hover:bg-blue-600"
-        onClick={logOutUser}
-      >
-        Log out
-      </button>
-    </div>
+    <>
+      <aside className="w-1/4 fixed inset-0 float-left background"></aside>
+      <div className="h-full w-3/4 bg-gray-100 p-4 sm:p-8 flex flex-col items-center float-right">
+        <h3 className="mb-4 sm:mb-8 text-2xl text-center">{auth?.fullName}</h3>
+        <img
+          src={auth?.profilePictureUrl}
+          alt="Profile"
+          className="w-24 h-24 mb-4 sm:mb-8 object-cover rounded-full "
+        />
+        <button
+          className="py-2 px-4 font-bold text-white rounded-lg bg-blue-500 hover:bg-blue-600"
+          onClick={logOutUser}
+        >
+          Log out
+        </button>
+      </div>
+    </>
   );
 
   return (
     <div className="relative h-full">
       <LogoOverlay />
-      <div
-        id="main-view"
-        className={`h-full flex flex-col justify-center bg-cover bg-center ${HIDE_APPS}`}
-        ref={mainViewRef}
-      >
+      <div id="main-view" className={`${HIDE_APPS}`} ref={mainViewRef}>
         {isEmail ? <Profile /> : <SignInWithGoogle />}
       </div>
     </div>
