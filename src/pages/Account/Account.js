@@ -83,7 +83,6 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
   };
 
   const SignInWithGoogle = () => (
-    <div className="flex justify-center px-4 py-2">
       <div
         id="g_id_onload"
         data-client_id="83080450952-rllpgdh47oov5kjdgm817j0n1n7qsh18.apps.googleusercontent.com"
@@ -91,27 +90,17 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
         data-ux_mode="popup"
         data-callback="handleCredentialResponse"
         data-auto_prompt="false"
-      ></div>
       <div
         className="g_id_signin"
         data-type="standard"
-        data-shape="pill"
         data-theme="outline"
         data-text="signin_with"
-        data-size="large"
-        data-logo_alignment="left"
-      ></div>
+      </div>
     </div>
   );
 
   const Profile = () => (
     <div className="p-4 sm:p-8 flex flex-col items-center">
-      <h1 className="mb-4 sm:mb-8 text-2xl font-bold text-center">
-        {auth?.fullName}
-      </h1>
-      <img
-        src={auth?.profilePictureUrl}
-        alt="Profile"
         className="w-24 h-24 mb-4 sm:mb-8 object-cover rounded-full "
       />
       <button
