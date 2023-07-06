@@ -42,6 +42,27 @@ nav {
 aside.background {
   background-position: left;
 }
+aside.background:before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent);
+}
+
+.box {
+  --body-max-width: 650px;
+  --box-padding: 46px;
+  --border-radius: 5px;
+  width: 100%;
+  max-width: var(--body-max-width);
+  padding: var(--box-padding);
+  padding-bottom: calc(var(--box-padding) - 3px);
+  align-self: center;
+  background: #fff;
+  border-radius: var(--border-radius);
+  -webkit-box-shadow: 0 13px 40px hsla(198, 20%, 21%, 0.13);
+  box-shadow: 0 13px 40px hsla(198, 20%, 21%, 0.13);
+}
 
 .overlay {
   height: 100% !important;
@@ -73,6 +94,12 @@ aside.background {
   width: 18px;
   min-width: 18px;
   margin-right: 8px;
+}
+
+@media (max-width: 640px) {
+  .box {
+    --box-padding: 23px;
+  }
 }
 
 @keyframes fadein {

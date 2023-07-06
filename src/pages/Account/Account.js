@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import { LogoOverlay } from "../../components";
 import {
   HIDE_APPS,
@@ -108,20 +108,39 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
 
   const Profile = () => (
     <>
-      <aside className="w-1/4 fixed inset-0 float-left background"></aside>
-      <div className="h-full w-3/4 bg-gray-100 p-4 sm:p-8 flex flex-col items-center float-right">
-        <h3 className="mb-4 sm:mb-8 text-2xl text-center">{auth?.fullName}</h3>
-        <img
-          src={auth?.profilePictureUrl}
-          alt="Profile"
-          className="w-24 h-24 mb-4 sm:mb-8 object-cover rounded-full "
-        />
-        <button
-          className="py-2 px-4 font-bold text-white rounded-lg bg-blue-500 hover:bg-blue-600"
-          onClick={logOutUser}
-        >
-          Log out
-        </button>
+      <aside className="w-1/4 fixed sm:inset-0 float-left background"></aside>
+      <div className="h-full sm:w-3/4 p-4 sm:p-8 flex flex-col sm:float-right bg-gray-100 text-neutral-600">
+        <div className="box">
+          <h1 className="mb-4 sm:mb-8 text-2xl sm:text-3xl font-bold">
+            Profile
+          </h1>
+          <img
+            src={auth?.profilePictureUrl}
+            alt="Profile"
+            className="w-16 sm:w-20 h-16 sm:h-20 mb-4 sm:mb-8 object-cover rounded-full "
+          />
+          {[
+            { label: "Full Name", value: auth?.fullName },
+            { label: "Email", value: auth?.email },
+          ].map(({ label, value }) => (
+            <React.Fragment key={label}>
+              <label className="text-lg sm:text-xl text-neutral-500">
+                {label}
+              </label>
+              <input
+                className="w-full mt-2 sm:mt-4 mb-4 sm:mb-8 p-2 text-lg sm:text-xl bg-gray-100 border-2 rounded-sm"
+                defaultValue={value}
+                disabled
+              />
+            </React.Fragment>
+          ))}
+          <button
+            className="py-2 px-4 font-bold text-white rounded-lg bg-blue-400 rounded-3xl hover:bg-blue-300"
+            onClick={logOutUser}
+          >
+            Log out
+          </button>
+        </div>
       </div>
     </>
   );
