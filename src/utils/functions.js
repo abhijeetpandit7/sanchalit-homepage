@@ -62,6 +62,14 @@ export const getUserId = async (googleCredential) => {
   }
 };
 
+export const isActiveSubscription = (subscriptionSummary) => {
+  const { startDate, endDate } = subscriptionSummary;
+  const instantDate = new Date();
+  const isActive =
+    instantDate >= new Date(startDate) && instantDate <= new Date(endDate);
+  return isActive;
+};
+
 export const logInUserWithGoogle = async (googleCredential) => {
   try {
     const response = await axios.post(`${URL_ROOT_API}/user/login`, {

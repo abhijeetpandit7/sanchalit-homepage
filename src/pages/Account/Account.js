@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef, useState } from "react";
-import { LogoOverlay } from "../../components";
+import { LogoOverlay, Subscription, Upgrade } from "../../components";
 import {
   HIDE_APPS,
   TOKEN,
@@ -8,6 +8,7 @@ import {
   getLocalCookieItem,
   getUser,
   getUserId,
+  isActiveSubscription,
   logInUserWithGoogle,
   mergeUserWithGoogle,
   removeRefClassName,
@@ -19,6 +20,10 @@ const GOOGLE_SCRIPT_ID = "google-platform";
 
 const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
   const isEmail = !!auth?.email;
+  const isActiveSubscriptionPlan = !!(
+    auth?.subscriptionSummary?.plan &&
+    isActiveSubscription(auth?.subscriptionSummary)
+  );
 
   useEffect(() => {
     if (isReady === false) return;
@@ -109,7 +114,7 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
   const Profile = () => (
     <>
       <aside className="w-1/4 fixed sm:inset-0 float-left background"></aside>
-      <div className="h-full sm:w-3/4 p-4 sm:p-8 flex flex-col sm:float-right bg-gray-100 text-neutral-600">
+      <div className="min-h-full sm:w-3/4 p-4 sm:p-8 flex flex-col sm:float-right bg-gray-100 text-neutral-600">
         <div className="box">
           <h1 className="mb-4 sm:mb-8 text-2xl sm:text-3xl font-bold">
             Profile
@@ -141,6 +146,7 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
             Log out
           </button>
         </div>
+        {isActiveSubscriptionPlan ? <Subscription /> : <Upgrade />}
       </div>
     </>
   );
