@@ -40,6 +40,15 @@ const getDateFromToday = (numberOfDays) => {
 
 export const getLocalCookieItem = (key) => new Cookies().get(key);
 
+export const getSubscriptionPlans = async (token) => {
+  try {
+    const response = await axios.get(`${URL_ROOT_API}/subscriptionPlan`);
+    return response.data;
+  } catch (error) {
+    return;
+  }
+};
+
 export const getUser = async (token) => {
   const headers = { Authorization: token };
   try {

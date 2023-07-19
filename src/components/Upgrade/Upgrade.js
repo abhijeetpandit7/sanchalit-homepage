@@ -1,42 +1,71 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import "./upgrade.css";
-import { iconCheck } from "../../utils";
+import {
+  iconCheck,
+  URL_MONTHLY_CHECKOUT,
+  URL_YEARLY_CHECKOUT,
+  getSubscriptionPlans,
+} from "../../utils";
 
 export const Upgrade = memo(() => {
+  const [plans, setPlans] = useState({});
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const subscriptionPlansResponse = await getSubscriptionPlans();
+      if (subscriptionPlansResponse?.success) {
+        await setPlans(subscriptionPlansResponse.plans);
+        await setSelectedPlan(subscriptionPlansResponse.plans.yearly.id);
+      }
+    })();
+  }, []);
+
+  const redirectToCheckout = () =>
+    (window.location.href = selectedPlan.includes("month")
+      ? URL_MONTHLY_CHECKOUT
+      : URL_YEARLY_CHECKOUT);
+
   return (
     <div className="box mt-4 sm:mt-8">
       <h1 className="mb-4 sm:mb-8 text-2xl sm:text-3xl font-bold">
         Choose a plan
       </h1>
       <ul className="plan-chooser">
-        <li className="form-option">
-          <div className="choose-plan-radio-wrapper">
-            <i className="radio">{iconCheck}</i>
-          </div>
-          <div className="choose-plan-text-wrapper">
-            <div className="choose-plan-term">
-              <span className="period">Billed Monthly</span>
+        {Object.values(plans).map((plan) => (
+          <li
+            className={`form-option ${
+              plan.id === selectedPlan ? "active" : ""
+            }`}
+            onClick={() => setSelectedPlan(plan.id)}
+            key={plan.id}
+          >
+            <div className="choose-plan-radio-wrapper">
+              <i className="radio">{iconCheck}</i>
             </div>
-            <span className="choose-plan-price">$2.95/month</span>
-          </div>
-        </li>
-        <li className="form-option active">
-          <div className="choose-plan-radio-wrapper">
-            <i className="radio">{iconCheck}</i>
-          </div>
-          <div className="choose-plan-text-wrapper">
-            <div className="choose-plan-term">
-              <span className="period">Billed Yearly</span>
-              <span className="choose-plan-badge">Save 32%!</span>
+            <div className="choose-plan-text-wrapper">
+              <div className="choose-plan-term">
+                <span className="period capitalize">
+                  Billed {plan.interval}ly
+                </span>
+                {plan.badgeText && (
+                  <span className="choose-plan-badge">{plan.badgeText}</span>
+                )}
+              </div>
+              <span className="choose-plan-price">{plan.friendlyPlanRate}</span>
+              {plan.friendlyMonthlyPrice && (
+                <span className="choose-plan-description">
+                  Equal to ${plan.friendlyMonthlyPrice}/month
+                </span>
+              )}
             </div>
-            <span className="choose-plan-price">$23.95/year</span>
-            <span className="choose-plan-description">
-              Equal to $1.99/month
-            </span>
-          </div>
-        </li>
+          </li>
+        ))}
       </ul>
-      <button className="mt-6 py-2 px-12 font-bold text-white rounded-lg bg-blue-400 rounded-3xl hover:bg-blue-300">
+      <button
+        className="mt-6 py-2 px-12 font-bold text-white rounded-lg bg-blue-400 rounded-3xl hover:bg-blue-300"
+        onClick={redirectToCheckout}
+      >
         Upgrade
       </button>
     </div>
