@@ -2,12 +2,11 @@ import { memo, useEffect, useState } from "react";
 import "./upgrade.css";
 import {
   iconCheck,
-  URL_MONTHLY_CHECKOUT,
-  URL_YEARLY_CHECKOUT,
+  generateCheckoutLink,
   getSubscriptionPlans,
 } from "../../utils";
 
-export const Upgrade = memo(() => {
+export const Upgrade = memo(({ email, userId }) => {
   const [plans, setPlans] = useState({});
   const [selectedPlan, setSelectedPlan] = useState(null);
 
@@ -22,9 +21,7 @@ export const Upgrade = memo(() => {
   }, []);
 
   const redirectToCheckout = () =>
-    (window.location.href = selectedPlan.includes("month")
-      ? URL_MONTHLY_CHECKOUT
-      : URL_YEARLY_CHECKOUT);
+    (window.location.href = generateCheckoutLink(email, userId, selectedPlan));
 
   return (
     <div className="box mt-4 sm:mt-8">

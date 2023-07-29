@@ -146,7 +146,11 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
             Log out
           </button>
         </div>
-        {isActiveSubscriptionPlan ? <Subscription /> : <Upgrade />}
+        {isActiveSubscriptionPlan ? (
+          <Subscription />
+        ) : (
+          <Upgrade {...{ email: auth?.email, userId: auth?.userId }} />
+        )}
       </div>
     </>
   );
