@@ -38,12 +38,12 @@ export const connectGoogle = async (googleCredential, token) => {
   }
 };
 
-export const generateCheckoutLink = (email, userId, planId) => {
-  const isMonthlyPlan = planId.includes("month");
+export const generateCheckoutLink = (email, userId, plan) => {
+  const isMonthlyPlan = plan.includes("month");
   const queryParams = new URLSearchParams({
     "checkout[email]": email,
     "checkout[custom][userId]": userId,
-    "checkout[custom][planId]": planId,
+    "checkout[custom][plan]": plan,
   });
   return `${URL_CHECKOUT_DOMAIN}/checkout/buy/${
     isMonthlyPlan ? VARIANT_ID_MONTHLY : VARIANT_ID_YEARLY
