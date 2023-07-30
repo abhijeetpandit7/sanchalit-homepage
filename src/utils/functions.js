@@ -1,12 +1,6 @@
 import axios from "axios";
 import Cookies from "universal-cookie";
-import {
-  VARIANT_ID_MONTHLY,
-  VARIANT_ID_YEARLY,
-  URL_CHECKOUT_DOMAIN,
-  URL_ROOT_API,
-  URL_ROOT_DOMAIN,
-} from "../utils";
+import { URL_CHECKOUT_DOMAIN, URL_ROOT_API, URL_ROOT_DOMAIN } from "../utils";
 
 export const checkIfExtensionIsInstalled = () => {
   const version = document.getElementById("sanchalitVersion");
@@ -39,14 +33,13 @@ export const connectGoogle = async (googleCredential, token) => {
 };
 
 export const generateCheckoutLink = (email, userId, plan) => {
-  const isMonthlyPlan = plan.includes("month");
   const queryParams = new URLSearchParams({
     "checkout[email]": email,
     "checkout[custom][userId]": userId,
-    "checkout[custom][plan]": plan,
+    "checkout[custom][plan]": plan.id,
   });
   return `${URL_CHECKOUT_DOMAIN}/checkout/buy/${
-    isMonthlyPlan ? VARIANT_ID_MONTHLY : VARIANT_ID_YEARLY
+    plan.variantId
   }?${queryParams.toString()}`;
 };
 

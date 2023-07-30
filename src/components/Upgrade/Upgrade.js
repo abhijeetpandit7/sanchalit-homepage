@@ -20,8 +20,16 @@ export const Upgrade = memo(({ email, userId }) => {
     })();
   }, []);
 
-  const redirectToCheckout = () =>
-    (window.location.href = generateCheckoutLink(email, userId, selectedPlan));
+  const redirectToCheckout = () => {
+    const selectedPlanDetails = Object.values(plans).find(
+      (plan) => plan.id === selectedPlan
+    );
+    window.location.href = generateCheckoutLink(
+      email,
+      userId,
+      selectedPlanDetails
+    );
+  };
 
   return (
     <div className="box mt-4 sm:mt-8">
