@@ -1,6 +1,11 @@
 import axios from "axios";
 import Cookies from "universal-cookie";
-import { URL_CHECKOUT_DOMAIN, URL_ROOT_API, URL_ROOT_DOMAIN } from "../utils";
+import {
+  URL_CHECKOUT_DOMAIN,
+  URL_ROOT_API,
+  URL_ROOT_DOMAIN,
+  SUBSCRIPTION_STATUS_LIST,
+} from "../utils";
 
 export const checkIfExtensionIsInstalled = () => {
   const version = document.getElementById("sanchalitVersion");
@@ -85,9 +90,12 @@ export const getUserId = async (googleCredential) => {
 export const isActiveSubscription = (subscriptionSummary) => {
   const { startDate, endDate } = subscriptionSummary;
   const instantDate = new Date();
-  const isActive =
+  const isPlusAccessibleStatus = SUBSCRIPTION_STATUS_LIST.find(
+    ({ name }) => name === subscriptionSummary.status
+  )?.plus;
+  const isDateWithinValidity =
     instantDate >= new Date(startDate) && instantDate <= new Date(endDate);
-  return isActive;
+  return isPlusAccessibleStatus && isDateWithinValidity;
 };
 
 export const logInUserWithGoogle = async (googleCredential) => {
