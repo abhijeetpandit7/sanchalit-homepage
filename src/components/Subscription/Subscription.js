@@ -3,9 +3,12 @@ import {
   formatDate,
   getNextRenewalDate,
   getSubscriptionData,
+  updateSubscriptionAutoRenewalStatus,
 } from "../../utils";
 export const Subscription = memo(({ token }) => {
   const [subscriptionData, setSubscriptionData] = useState({});
+  const [isUpdatingAutoRenewalStatus, setIsUpdatingAutoRenewalStatus] =
+    useState(false);
 
   useEffect(() => {
     (async () => {
@@ -26,9 +29,24 @@ export const Subscription = memo(({ token }) => {
   if (Object.keys(subscriptionData).length === 0) return null;
 
   const {
-    currentSubscription: { endsAt, renewsAt, friendlyAmount, interval },
+    currentSubscription: { endsAt, renewsAt, friendlyAmount, interval, id },
     upcomingInvoice,
   } = subscriptionData;
+
+  const handleAutoRenewToggle = async (cancelled) => {
+    if (isUpdatingAutoRenewalStatus) return;
+    await setIsUpdatingAutoRenewalStatus(true);
+    const currentSubscriptionResponse =
+      await updateSubscriptionAutoRenewalStatus(token, id, cancelled);
+    await setSubscriptionData((prevValue) => ({
+      ...prevValue,
+      currentSubscription: {
+        ...prevValue.currentSubscription,
+        ...currentSubscriptionResponse,
+      },
+    }));
+    await setIsUpdatingAutoRenewalStatus(false);
+  };
 
   return (
     <div className="box mt-4 sm:mt-8">
@@ -36,19 +54,7 @@ export const Subscription = memo(({ token }) => {
         Sanchalit Plus
       </h1>
       <p className="text-xl">{friendlyAmount}</p>
-      {renewsAt ? (
-        <>
-          <h3 className="mt-4 sm:mt-8 mb-2 text-xl font-bold">Next renewal</h3>
-          <p>
-            {`$${upcomingInvoice}/${interval} on 
-        ${formatDate(renewsAt)} for service
-        through ${formatDate(getNextRenewalDate(renewsAt, interval))}`}
-          </p>
-          <span className="mt-2 inline-block text-sm text-blue-400 cursor-pointer hover:underline">
-            Turn off auto-renew
-          </span>
-        </>
-      ) : (
+      {endsAt ? (
         <>
           <p className="mt-2 sm:mt-4">
             You've turned off auto-renew. Your current plan will remain active
@@ -56,9 +62,33 @@ export const Subscription = memo(({ token }) => {
             <strong className="text-neutral-500"> {formatDate(endsAt)} </strong>
             for service
           </p>
-          <button className="mt-6 py-2 px-8 font-bold text-white rounded-lg bg-blue-400 rounded-3xl uppercase hover:bg-blue-300">
+          <button
+            className="mt-6 py-2 px-8 font-bold text-white rounded-lg bg-blue-400 rounded-3xl uppercase hover:bg-blue-300"
+            onClick={() => handleAutoRenewToggle(false)}
+            disabled={isUpdatingAutoRenewalStatus}
+          >
             Turn on auto-renew
           </button>
+        </>
+      ) : (
+        <>
+          <h3 className="mt-4 sm:mt-8 mb-2 text-xl font-bold">Next renewal</h3>
+          <p>
+            {`$${upcomingInvoice}/${interval} on 
+            ${formatDate(renewsAt)} for service
+            through ${formatDate(getNextRenewalDate(renewsAt, interval))}`}
+          </p>
+          <span
+            className="mt-2 inline-block text-sm text-blue-400 hover:underline"
+            style={{
+              cursor: isUpdatingAutoRenewalStatus ? "default" : "pointer",
+            }}
+            onClick={() => handleAutoRenewToggle(true)}
+          >
+            {isUpdatingAutoRenewalStatus
+              ? "Processing..."
+              : "Turn off auto-renew"}
+          </span>
         </>
       )}
     </div>

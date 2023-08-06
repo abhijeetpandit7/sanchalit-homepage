@@ -178,6 +178,26 @@ export const signUpUserWithGoogle = async (googleCredential) => {
   }
 };
 
+export const updateSubscriptionAutoRenewalStatus = async (
+  token,
+  subscriptionId,
+  cancelled
+) => {
+  const headers = { Authorization: token };
+  try {
+    const response = await axios.post(
+      `${URL_ROOT_API}/subscription/auto-renew`,
+      { data: { subscriptionId, cancelled } },
+      {
+        headers,
+      }
+    );
+    return response.data.currentSubscription;
+  } catch (error) {
+    return;
+  }
+};
+
 export const removeRefClassName = (ref, className) =>
   ref.current
     ? ref.current.classList.remove(className)
