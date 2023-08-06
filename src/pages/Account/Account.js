@@ -147,7 +147,7 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
           </button>
         </div>
         {isActiveSubscriptionPlan ? (
-          <Subscription />
+          <Subscription {...{ token }} />
         ) : (
           <Upgrade {...{ email: auth?.email, userId: auth?.userId }} />
         )}

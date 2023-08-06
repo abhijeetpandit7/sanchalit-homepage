@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "universal-cookie";
+import moment from "moment";
 import {
   URL_CHECKOUT_DOMAIN,
   URL_ROOT_API,
@@ -37,6 +38,14 @@ export const connectGoogle = async (googleCredential, token) => {
   }
 };
 
+export const formatDate = (timestamp) => {
+  const date = new Date(timestamp);
+  const options = { month: "long", day: "numeric", year: "numeric" };
+  return date
+    .toLocaleDateString("en-US", options)
+    .replace(/(\d)(st|nd|rd|th)/, "$1,");
+};
+
 export const generateCheckoutLink = (email, userId, plan) => {
   const queryParams = new URLSearchParams({
     "checkout[email]": email,
@@ -55,6 +64,30 @@ const getDateFromToday = (numberOfDays) => {
 };
 
 export const getLocalCookieItem = (key) => new Cookies().get(key);
+
+export const getNextRenewalDate = (renewsAt, interval) => {
+  const renewalDate = moment.utc(renewsAt);
+  let nextRenewalDate;
+  if (interval === "year") {
+    nextRenewalDate = renewalDate.clone().add(1, "year");
+  } else if (interval === "month") {
+    const daysInRenewalMonth = renewalDate.daysInMonth();
+    nextRenewalDate = renewalDate.clone().add(daysInRenewalMonth, "days");
+  }
+  return nextRenewalDate;
+};
+
+export const getSubscriptionData = async (token) => {
+  const headers = { Authorization: token };
+  try {
+    const response = await axios.get(`${URL_ROOT_API}/subscription`, {
+      headers,
+    });
+    return response.data;
+  } catch (error) {
+    return;
+  }
+};
 
 export const getSubscriptionPlans = async (token) => {
   try {
