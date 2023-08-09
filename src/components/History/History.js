@@ -5,7 +5,7 @@ import {
   dinersIcon,
   discoverIcon,
   eloIcon,
-  iconCheck,
+  iconCheckFilled,
   jcbIcon,
   mastercardIcon,
   unionpayIcon,
@@ -64,7 +64,7 @@ export const History = memo(({ charges, updatePaymentMethodUrl }) => {
           {charges.map((charge, index) => (
             <tr className="border-t border-gray-200" key={index}>
               <td className="py-3 px-1.5 pl-3">
-                <i title="Charge succeeded">{iconCheck}</i>
+                <i title="Charge succeeded">{iconCheckFilled}</i>
               </td>
               <td className="py-3 px-1.5">{formatDate(charge.date, false)}</td>
               <td className="py-3 px-1.5">
