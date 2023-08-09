@@ -38,9 +38,13 @@ export const connectGoogle = async (googleCredential, token) => {
   }
 };
 
-export const formatDate = (timestamp) => {
+export const formatDate = (timestamp, longMonthFormat = true) => {
   const date = new Date(timestamp);
-  const options = { month: "long", day: "numeric", year: "numeric" };
+  const options = {
+    month: longMonthFormat ? "long" : "short",
+    day: "numeric",
+    year: "numeric",
+  };
   return date
     .toLocaleDateString("en-US", options)
     .replace(/(\d)(st|nd|rd|th)/, "$1,");
