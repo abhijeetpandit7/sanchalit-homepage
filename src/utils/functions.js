@@ -114,7 +114,7 @@ export const getUser = async (token) => {
 
 export const getUserId = async (googleCredential) => {
   const headers = {
-    google_credential: googleCredential.credential,
+    'google-credential': googleCredential.credential,
   };
   try {
     const response = await axios.get(`${URL_ROOT_API}/user/id`, { headers });
