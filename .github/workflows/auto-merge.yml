@@ -19,7 +19,14 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: auto-merge conditions
         id: auto-merge
-        if: ${{(contains('direct:development,indirect:development,direct:production,indirect:production', steps.dependabot-metadata.outputs.dependency-type) && steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch') || (contains('direct:development,indirect:development', steps.dependabot-metadata.outputs.dependency-type) && steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor')}}
+        if: |
+          (
+            steps.metadata.outputs.update-type == 'version-update:semver-patch' &&
+            contains('direct:development,indirect:development,direct:production,indirect:production', steps.metadata.outputs.dependency-type)
+          ) || (
+            steps.metadata.outputs.update-type == 'version-update:semver-minor' &&
+            contains('direct:development,indirect:development', steps.metadata.outputs.dependency-type)
+          )
         run: echo "auto-merge conditions satisfied"
       - name: auto-merge PR
         if: ${{ steps.auto-merge.conclusion == 'success' }}
