@@ -4,12 +4,10 @@ const EXPIRED = "expired";
 export const HIDE_APPS = "hide-apps";
 const PAST_DUE = "past_due";
 const ON_TRIAL = "on_trial";
-export const TOKEN = "token";
 const UNPAID = "unpaid";
 
 export const URL_CHECKOUT_DOMAIN = "https://sanchalit.lemonsqueezy.com";
 export const URL_ROOT_API = "https://sanchalit.onrender.com";
-export const URL_ROOT_DOMAIN = "https://sanchalithome.netlify.app";
 
 export const SUBSCRIPTION_STATUS_LIST = [
   { name: ACTIVE, key: ACTIVE, plus: true },

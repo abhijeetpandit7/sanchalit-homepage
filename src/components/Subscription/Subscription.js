@@ -1,20 +1,20 @@
 import { memo, useEffect, useState } from "react";
-import { History } from "../History/History";
 import {
   formatDate,
   getNextRenewalDate,
   getSubscriptionData,
   updateSubscriptionAutoRenewalStatus,
 } from "../../utils";
+import { History } from "../History/History";
 
-export const Subscription = memo(({ token }) => {
+export const Subscription = memo(() => {
   const [subscriptionData, setSubscriptionData] = useState({});
   const [isUpdatingAutoRenewalStatus, setIsUpdatingAutoRenewalStatus] =
     useState(false);
 
   useEffect(() => {
     (async () => {
-      const subscriptionDataResponse = await getSubscriptionData(token);
+      const subscriptionDataResponse = await getSubscriptionData();
       if (subscriptionDataResponse?.success) {
         const {
           currentSubscription,
@@ -45,7 +45,7 @@ export const Subscription = memo(({ token }) => {
     if (isUpdatingAutoRenewalStatus) return;
     await setIsUpdatingAutoRenewalStatus(true);
     const currentSubscriptionResponse =
-      await updateSubscriptionAutoRenewalStatus(token, id, cancelled);
+      await updateSubscriptionAutoRenewalStatus( id, cancelled);
     await setSubscriptionData((prevValue) => ({
       ...prevValue,
       currentSubscription: {
