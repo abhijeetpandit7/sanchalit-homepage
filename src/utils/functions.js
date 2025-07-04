@@ -1,27 +1,19 @@
 import axios from "axios";
-import Cookies from "universal-cookie";
 import moment from "moment";
 import {
+  SUBSCRIPTION_STATUS_LIST,
   URL_CHECKOUT_DOMAIN,
   URL_ROOT_API,
-  URL_ROOT_DOMAIN,
-  SUBSCRIPTION_STATUS_LIST,
 } from "../utils";
+
+// TODO: Remove withCredentials, this allows cross-site Access-Control requests with credentials
 
 export const checkIfExtensionIsInstalled = () => {
   const version = document.getElementById("sanchalitVersion");
   return version && version.value;
 };
 
-export const connectGoogle = async (googleCredential, token) => {
-  let headers = {};
-  if (token) {
-    headers = {
-      ...headers,
-      Authorization: token,
-    };
-  }
-
+export const connectGoogle = async (googleCredential) => {
   try {
     const response = await axios.post(
       `${URL_ROOT_API}/user/connect/google`,
@@ -29,7 +21,7 @@ export const connectGoogle = async (googleCredential, token) => {
         googleCredential: googleCredential.credential,
       },
       {
-        headers,
+        withCredentials: true,
       }
     );
     return response.data;
@@ -61,14 +53,6 @@ export const generateCheckoutLink = (email, userId, plan) => {
   }?${queryParams.toString()}`;
 };
 
-const getDateFromToday = (numberOfDays) => {
-  const date = new Date();
-  date.setDate(date.getDate() + numberOfDays);
-  return date;
-};
-
-export const getLocalCookieItem = (key) => new Cookies().get(key);
-
 export const getNextRenewalDate = (renewsAt, interval) => {
   const renewalDate = moment.utc(renewsAt);
   let nextRenewalDate;
@@ -81,11 +65,10 @@ export const getNextRenewalDate = (renewsAt, interval) => {
   return nextRenewalDate;
 };
 
-export const getSubscriptionData = async (token) => {
-  const headers = { Authorization: token };
+export const getSubscriptionData = async () => {
   try {
     const response = await axios.get(`${URL_ROOT_API}/subscription`, {
-      headers,
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -93,7 +76,7 @@ export const getSubscriptionData = async (token) => {
   }
 };
 
-export const getSubscriptionPlans = async (token) => {
+export const getSubscriptionPlans = async () => {
   try {
     const response = await axios.get(`${URL_ROOT_API}/subscriptionPlan`);
     return response.data;
@@ -102,10 +85,11 @@ export const getSubscriptionPlans = async (token) => {
   }
 };
 
-export const getUser = async (token) => {
-  const headers = { Authorization: token };
+export const getUser = async () => {
   try {
-    const response = await axios.get(`${URL_ROOT_API}/user`, { headers });
+    const response = await axios.get(`${URL_ROOT_API}/user`, {
+      withCredentials: true,
+    });
     return response.data;
   } catch (error) {
     return;
@@ -114,7 +98,7 @@ export const getUser = async (token) => {
 
 export const getUserId = async (googleCredential) => {
   const headers = {
-    'google-credential': googleCredential.credential,
+    "google-credential": googleCredential.credential,
   };
   try {
     const response = await axios.get(`${URL_ROOT_API}/user/id`, { headers });
@@ -135,10 +119,10 @@ export const isActiveSubscription = (subscriptionSummary) => {
   return isPlusAccessibleStatus && isDateWithinValidity;
 };
 
-export const logInUserWithGoogle = async (googleCredential) => {
+export const logOut = async () => {
   try {
-    const response = await axios.post(`${URL_ROOT_API}/user/login`, {
-      googleCredential: googleCredential.credential,
+    const response = await axios.post(`${URL_ROOT_API}/user/logout`, null, {
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -146,15 +130,14 @@ export const logInUserWithGoogle = async (googleCredential) => {
   }
 };
 
-export const mergeUserWithGoogle = async (googleCredential, token) => {
-  const headers = { Authorization: token };
+export const logInUserWithGoogle = async (googleCredential) => {
   try {
     const response = await axios.post(
-      `${URL_ROOT_API}/userData/merge`,
+      `${URL_ROOT_API}/user/login`,
       {
         googleCredential: googleCredential.credential,
       },
-      { headers }
+      { withCredentials: true }
     );
     return response.data;
   } catch (error) {
@@ -162,20 +145,30 @@ export const mergeUserWithGoogle = async (googleCredential, token) => {
   }
 };
 
-export const setLocalCookieItem = (key, value) =>
-  new Cookies().set(key, value, {
-    domain:
-      process.env.NODE_ENV === "production"
-        ? `.${URL_ROOT_DOMAIN.split("https://")[1]}`
-        : "",
-    expires: getDateFromToday(365),
-  });
+export const mergeUserWithGoogle = async (googleCredential) => {
+  try {
+    const response = await axios.post(
+      `${URL_ROOT_API}/userData/merge`,
+      {
+        googleCredential: googleCredential.credential,
+      },
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    return;
+  }
+};
 
 export const signUpUserWithGoogle = async (googleCredential) => {
   try {
-    const response = await axios.post(`${URL_ROOT_API}/user/signup/google`, {
-      googleCredential: googleCredential.credential,
-    });
+    const response = await axios.post(
+      `${URL_ROOT_API}/user/signup/google`,
+      {
+        googleCredential: googleCredential.credential,
+      },
+      { withCredentials: true }
+    );
     return response.data;
   } catch (error) {
     return;
@@ -183,17 +176,15 @@ export const signUpUserWithGoogle = async (googleCredential) => {
 };
 
 export const updateSubscriptionAutoRenewalStatus = async (
-  token,
   subscriptionId,
   cancelled
 ) => {
-  const headers = { Authorization: token };
   try {
     const response = await axios.post(
       `${URL_ROOT_API}/subscription/auto-renew`,
       { data: { subscriptionId, cancelled } },
       {
-        headers,
+        withCredentials: true,
       }
     );
     return response.data.currentSubscription;

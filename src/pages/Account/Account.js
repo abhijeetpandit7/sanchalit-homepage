@@ -2,41 +2,39 @@ import React, { memo, useEffect, useRef, useState } from "react";
 import { LogoOverlay, Subscription, Upgrade } from "../../components";
 import {
   HIDE_APPS,
-  TOKEN,
   checkIfExtensionIsInstalled,
   connectGoogle,
-  getLocalCookieItem,
   getUser,
   getUserId,
   isActiveSubscription,
   logInUserWithGoogle,
+  logOut,
   mergeUserWithGoogle,
   removeRefClassName,
-  setLocalCookieItem,
   signUpUserWithGoogle,
 } from "../../utils";
 
 const GOOGLE_SCRIPT_ID = "google-platform";
 
-const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
-  const isEmail = !!auth?.email;
+const ContextMemo = memo(({ mainViewRef, auth, setAuth }) => {
+  const email = auth?.email;
+  const userId = auth?.userId;
   const isActiveSubscriptionPlan = !!(
     auth?.subscriptionSummary?.plan &&
     isActiveSubscription(auth?.subscriptionSummary)
   );
 
   useEffect(() => {
-    if (isReady === false) return;
-    if (isEmail) return;
-    if (!document.getElementById(GOOGLE_SCRIPT_ID)) {
-      const script = document.createElement("script");
-      script.id = GOOGLE_SCRIPT_ID;
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-  }, [isReady, isEmail]);
+    if (auth === null || !!email) return;
+    const prevScript = document.getElementById(GOOGLE_SCRIPT_ID);
+    const script = document.createElement("script");
+    script.id = GOOGLE_SCRIPT_ID;
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    if (prevScript) prevScript.replaceWith(script);
+    else document.head.appendChild(script);
+  }, [auth, email]);
 
   window.handleCredentialResponse = async (googleCredential) => {
     let response, authenticationType;
@@ -48,18 +46,18 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
       isExistingGoogleUser = true;
     }
 
-    if (isExistingGoogleUser && token) {
+    if (isExistingGoogleUser && userId) {
       const isSeparateUserId =
-        googleCredentialAssociatedAuthResponse.auth.userId !== auth.userId;
+        googleCredentialAssociatedAuthResponse.auth.userId !== userId;
       if (isSeparateUserId) {
-        response = await mergeUserWithGoogle(googleCredential, token);
+        response = await mergeUserWithGoogle(googleCredential);
         authenticationType = "mergeUserWithGoogle";
       }
-    } else if (isExistingGoogleUser && !token) {
+    } else if (isExistingGoogleUser && !userId) {
       response = await logInUserWithGoogle(googleCredential);
       authenticationType = "logInUserWithGoogle";
-    } else if (!isExistingGoogleUser && token) {
-      response = await connectGoogle(googleCredential, token);
+    } else if (!isExistingGoogleUser && userId) {
+      response = await connectGoogle(googleCredential);
       authenticationType = "connectGoogle";
     } else {
       response = await signUpUserWithGoogle(googleCredential);
@@ -67,7 +65,7 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
     }
 
     if (response?.success) {
-      await setToken(response.auth.token);
+      setAuth(response.auth);
       if (checkIfExtensionIsInstalled()) {
         window.postMessage(
           {
@@ -80,10 +78,13 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
     }
   };
 
-  const logOutUser = () => {
-    setToken("");
-    if (checkIfExtensionIsInstalled()) {
-      window.postMessage({ type: "logOutUser" }, window.location);
+  const logOutUser = async () => {
+    const response = await logOut();
+    if (response?.success) {
+      setAuth({});
+      if (checkIfExtensionIsInstalled()) {
+        window.postMessage({ type: "logOutUser" }, window.location);
+      }
     }
   };
 
@@ -126,7 +127,7 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
           />
           {[
             { label: "Full Name", value: auth?.fullName },
-            { label: "Email", value: auth?.email },
+            { label: "Email", value: email },
           ].map(({ label, value }) => (
             <React.Fragment key={label}>
               <label className="text-lg sm:text-xl text-neutral-500">
@@ -147,9 +148,9 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
           </button>
         </div>
         {isActiveSubscriptionPlan ? (
-          <Subscription {...{ token }} />
+          <Subscription />
         ) : (
-          <Upgrade {...{ email: auth?.email, userId: auth?.userId }} />
+          <Upgrade {...{ email, userId }} />
         )}
       </div>
     </>
@@ -159,7 +160,7 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
     <div className="relative h-full">
       <LogoOverlay />
       <div id="main-view" className={`${HIDE_APPS}`} ref={mainViewRef}>
-        {isEmail ? <Profile /> : <SignInWithGoogle />}
+        {email ? <Profile /> : <SignInWithGoogle />}
       </div>
     </div>
   );
@@ -168,55 +169,18 @@ const ContextMemo = memo(({ mainViewRef, auth, isReady, token, setToken }) => {
 const Account = () => {
   const mainViewRef = useRef(null);
   const [auth, setAuth] = useState(null);
-  const [token, setToken] = useState(null);
-  const [widgetReady, setWidgetReady] = useState({
-    local: false,
-    api: false,
-  });
-  const isReady = Object.values(widgetReady).every((value) => value === true);
 
   useEffect(() => {
     (async () => {
-      if (isReady) {
-        removeRefClassName(mainViewRef, HIDE_APPS);
-      }
-    })();
-  }, [isReady]);
-
-  useEffect(() => {
-    (async () => {
-      if (widgetReady.local) {
-        if (token) {
-          const authResponse = await getUser(token);
-          if (authResponse?.success) {
-            await setAuth(authResponse.auth);
-          }
-        } else setAuth(null);
-        setWidgetReady((prevState) => ({ ...prevState, api: true }));
-      }
-    })();
-  }, [token, widgetReady.local]);
-
-  useEffect(() => {
-    (async () => {
-      let token;
-      try {
-        token = await getLocalCookieItem(TOKEN);
-      } catch (e) {}
-      setToken(token);
-      setWidgetReady((prevState) => ({ ...prevState, local: true }));
+      const authResponse = await getUser();
+      if (authResponse?.success) {
+        setAuth(authResponse.auth);
+      } else setAuth({});
+      removeRefClassName(mainViewRef, HIDE_APPS);
     })();
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      if (token || token?.length === 0) {
-        await setLocalCookieItem(TOKEN, token);
-      }
-    })();
-  }, [token]);
-
-  return <ContextMemo {...{ mainViewRef, auth, isReady, token, setToken }} />;
+  return <ContextMemo {...{ mainViewRef, auth, setAuth }} />;
 };
 
 export default Account;
